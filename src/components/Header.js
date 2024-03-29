@@ -1,61 +1,59 @@
+import { LOGO_URL } from "../utils/constants";
 import { useState, useContext } from "react";
-import Logo from "../assets/img/foodvilla.png";
 import { Link } from "react-router-dom";
-import useOnline from "../utils/useOnline";
+import useOnlineStatus from "../utils/useOnlineStatus";
 import UserContext from "../utils/UserContext";
 import { useSelector } from "react-redux";
 
-// SPA - Single Page Application???
-// Client Side Routing
-
-const Title = () => (
-  <a href="/">
-    <img data-testid="logo" className="h-28 p-2" alt="logo" src={Logo} />
-  </a>
-);
-
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [btnNameReact, setBtnNameReact] = useState("Login");
 
-  const isOnline = useOnline();
+  const onlineStatus = useOnlineStatus();
 
-  const { user } = useContext(UserContext);
+  const { loggedInUser } = useContext(UserContext);
+  //console.log(loggedInUser);
 
+  // Subscribing to the store using a Selector
   const cartItems = useSelector((store) => store.cart.items);
-  console.log(cartItems);
+  //console.log(cartItems);
 
   return (
-    <div className="flex justify-between bg-pink-50 shadow-lg sm:bg-blue-50 md:bg-yellow-50">
-      <Title />
-      <div className="nav-items">
-        <ul className="flex py-10">
-          <li className="px-2">
+    <div className="flex justify-between bg-pink-100 shadow-lg sm:bg-yellow-50 lg:bg-green-50">
+      <div className="logo-container">
+        <img className="w-56" src={LOGO_URL} />
+      </div>
+      <div className="flex items-center">
+        <ul className="flex p-4 m-4">
+          <li className="px-4">Online Status: {onlineStatus ? "✅" : "🔴"}</li>
+          <li className="px-4">
             <Link to="/">Home</Link>
           </li>
+          <li className="px-4">
+            <Link to="/about">About Us</Link>
+          </li>
+          <li className="px-4">
+            <Link to="/contact">Contact Us</Link>
+          </li>
+          <li className="px-4">
+            <Link to="/grocery">Grocery</Link>
+          </li>
+          <li className="px-4 font-bold text-xl">
+            <Link to="/cart">Cart - ({cartItems.length} items)</Link>
+          </li>
+          <button
+            className="login"
+            onClick={() => {
+              btnNameReact === "Login"
+                ? setBtnNameReact("Logout")
+                : setBtnNameReact("Login");
+            }}
+          >
+            {btnNameReact}
+          </button>
 
-          <Link to="/about">
-            <li className="px-2">About</li>
-          </Link>
-          <Link to="/contact">
-            <li className="px-2">Contact</li>
-          </Link>
-          <Link to="/instamart">
-            <li className="px-2">Instamart</li>
-          </Link>
-          <Link to="/cart">
-            <li className="px-2" data-testid="cart">
-              Cart- {cartItems.length} items
-            </li>
-          </Link>
+          <li className="px-4 ">{loggedInUser}</li>
         </ul>
       </div>
-      <h1 data-testid="online-status">{isOnline ? "✅" : "🔴"}</h1>
-      <span className="p-10 font-bold text-red-900">{user.name}</span>
-      {isLoggedIn ? (
-        <button onClick={() => setIsLoggedIn(false)}>Logout</button>
-      ) : (
-        <button onClick={() => setIsLoggedIn(true)}>Login</button>
-      )}
     </div>
   );
 };

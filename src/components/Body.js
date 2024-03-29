@@ -1,92 +1,130 @@
-import { restaurantList } from "../contants";
-import RestaurantCard from "./RestaurantCard";
+import RestaurantCard, { withPromtedLabel } from "./RestaurantCard";
 import { useState, useEffect, useContext } from "react";
 import Shimmer from "./Shimmer";
 import { Link } from "react-router-dom";
-import { filterData } from "../utils/helper";
-import useOnline from "../utils/useOnline";
+import useOnlineStatus from "../utils/useOnlineStatus";
 import UserContext from "../utils/UserContext";
+import mockRestaurants from "./mocks/mockResListData.json";
 
 const Body = () => {
-  const [allRestaurants, setAllRestaurants] = useState([]);
-  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
+  // Local State Variable - Super powerful variable
+  const [listOfRestaurants, setListOfRestraunt] = useState([]);
+  const [filteredRestaurant, setFilteredRestaurant] = useState([]);
+
   const [searchText, setSearchText] = useState("");
-  const { user, setUser } = useContext(UserContext);
+
+  const RestaurantCardPromoted = withPromtedLabel(RestaurantCard);
+
+  // Whenever state variables update, react triggers a reconciliation cycle(re-renders the component)
 
   useEffect(() => {
-    getRestaurants();
+    // fetchData();
+    setListOfRestraunt(
+      mockRestaurants?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle
+        ?.restaurants
+    );
+    setFilteredRestaurant(
+      mockRestaurants?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle
+        ?.restaurants
+    );
   }, []);
 
-  async function getRestaurants() {
-    const data = await fetch(
-      "https://www.swiggy.com/dapi/restaurants/list/v5?lat=12.9351929&lng=77.62448069999999&page_type=DESKTOP_WEB_LISTING"
-    );
-    const json = await data.json();
-    setAllRestaurants(json?.data?.cards[2]?.data?.data?.cards);
-    setFilteredRestaurants(json?.data?.cards[2]?.data?.data?.cards);
-  }
-  if (!allRestaurants) return null;
+  // const fetchData = async () => {
+  //   const data = await fetch(
+  //     "https://www.swiggy.com/dapi/restaurants/list/v5?lat=12.9351929&lng=77.62448069999999&page_type=DESKTOP_WEB_LISTING"
+  //   );
 
-  return allRestaurants?.length === 0 ? (
+  //   const json = await data.json();
+
+  //   // Optional Chaining
+  //   setListOfRestraunt(
+  //     json?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+  //   );
+  //   setFilteredRestaurant(
+  //     json?.data?.cards[2]?.card?.card?.gridElements?.infoWithStyle?.restaurants
+  //   );
+  // };
+
+  const onlineStatus = useOnlineStatus();
+
+  if (onlineStatus === false)
+    return (
+      <h1>
+        Looks like you're offline!! Please check your internet connection;
+      </h1>
+    );
+
+  const { loggedInUser, setUserName } = useContext(UserContext);
+
+  return listOfRestaurants.length === 0 ? (
     <Shimmer />
   ) : (
-    <>
-      <div className="search-container p-5 bg-pink-50 my-5">
-        <input
-          data-testid="search-input"
-          type="text"
-          className="focus:bg-green-200 p-2 m-2"
-          placeholder="Search"
-          value={searchText}
-          onChange={(e) => {
-            setSearchText(e.target.value);
-          }}
-        />
-        <button
-          data-testid="search-btn"
-          className="p-2 m-2 bg-purple-900 hover:bg-gray-500 text-white rounded-md"
-          onClick={() => {
-            //need to filter the data
-            const data = filterData(searchText, allRestaurants);
-            // update the state - restaurants
-            setFilteredRestaurants(data);
-          }}
-        >
-          Search
-        </button>
-        <input
-          value={user.name}
-          onChange={(e) =>
-            setUser({
-              ...user,
-              name: e.target.value,
-            })
-          }
-        ></input>
-        <input
-          value={user.email}
-          onChange={(e) =>
-            setUser({
-              ...user,
-              email: e.target.value,
-            })
-          }
-        ></input>
+    <div className="body">
+      <div className="filter flex">
+        <div className="search m-4 p-4">
+          <input
+            type="text"
+            data-testid="searchInput"
+            className="border border-solid border-black"
+            value={searchText}
+            onChange={(e) => {
+              setSearchText(e.target.value);
+            }}
+          />
+          <button
+            className="px-4 py-2 bg-green-100 m-4 rounded-lg"
+            onClick={() => {
+              // Filter the restraunt cards and update the UI
+              // searchText
+              console.log(searchText);
+
+              const filteredRestaurant = listOfRestaurants.filter((res) =>
+                res.info.name.toLowerCase().includes(searchText.toLowerCase())
+              );
+
+              setFilteredRestaurant(filteredRestaurant);
+            }}
+          >
+            Search
+          </button>
+        </div>
+        <div className="search m-4 p-4 flex items-center">
+          <button
+            className="px-4 py-2 bg-gray-100 rounded-lg"
+            onClick={() => {
+              const filteredList = listOfRestaurants.filter(
+                (res) => res.info.avgRating > 4
+              );
+              setFilteredRestaurant(filteredList);
+            }}
+          >
+            Top Rated Restaurants
+          </button>
+        </div>
+        <div className="search m-4 p-4 flex items-center">
+          <label>UserName : </label>
+          <input
+            className="border border-black p-2"
+            value={loggedInUser}
+            onChange={(e) => setUserName(e.target.value)}
+          />
+        </div>
       </div>
-      <div className="flex flex-wrap " data-testid="res-list">
-        {/* You have to write logic for NO restraunt fount here */}
-        {filteredRestaurants.map((restaurant) => {
-          return (
-            <Link
-              to={"/restaurant/" + restaurant.data.id}
-              key={restaurant.data.id}
-            >
-              <RestaurantCard {...restaurant.data} />
-            </Link>
-          );
-        })}
+      <div className="flex flex-wrap">
+        {filteredRestaurant.map((restaurant) => (
+          <Link
+            key={restaurant?.info.id}
+            to={"/restaurants/" + restaurant?.info.id}
+          >
+            {restaurant?.info.promoted ? (
+              <RestaurantCardPromoted resData={restaurant?.info} />
+            ) : (
+              <RestaurantCard resData={restaurant?.info} />
+            )}
+          </Link>
+        ))}
       </div>
-    </>
+    </div>
   );
 };
 
