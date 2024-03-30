@@ -5,17 +5,17 @@ import restaurantMenu from "../components/mocks/mockResMenu.json";
 const useRestaurantMenu = (resId) => {
   const [resInfo, setResInfo] = useState(null);
 
-  // useEffect(() => {
-  //   fetchData();
-  // }, []);
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  // const fetchData = async () => {
-  //   const data = await fetch(MENU_API + resId);
-  //   const json = await data.json();
-  //   setResInfo(json.data);
-  // };
+  const fetchData = async () => {
+    const data = await fetch(MENU_API + resId);
+    const json = await data.json();
+    setResInfo(json.data);
+  };
 
-  return restaurantMenu.data;
+  return resInfo;
 };
 
 export default useRestaurantMenu;
